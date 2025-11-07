@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  balanceBtc Float    @default(0)
+  kycStatus  String   @default("pending")
+  createdAt  DateTime @default(now())
+  contracts  Contract[]
+}
+
+model Machine {
+  id                  String   @id @default(cuid())
+  name                String
+  hashrateTh          Float
+  priceUsdPerDay      Float
+  maintenanceUsdPerDay Float
+  poolFeePct          Float
+  createdAt           DateTime @default(now())
+  contracts           Contract[]
+}
+
+model Contract {
+  id             String   @id @default(cuid())
+  user           User     @relation(fields: [userId], references: [id])
+  userId         String
+  machine        Machine  @relation(fields: [machineId], references: [id])
+  machineId      String
+  startDate      DateTime
+  endDate        DateTime
+  days           Int
+  paidAmountUsd  Float
+  status         String   @default("active")
+  createdAt      DateTime @default(now())
+  dailyEarnings  DailyEarning[]
+  payouts        Payout[]
+}
+
+model DailyEarning {
+  id                           String   @id @default(cuid())
+  contract                     Contract @relation(fields: [contractId], references: [id])
+  contractId                   String
+  date                         DateTime
+  grossBtc                     Float
+  netBtc                       Float
+  hashpriceBtcPerThPerDay      Float
+  createdAt                    DateTime @default(now())
+}
+
+model Payout {
+  id         String   @id @default(cuid())
+  contract   Contract @relation(fields: [contractId], references: [id])
+  contractId String
+  date       DateTime
+  amountBtc  Float
+  status     String   @default("pending")
+  txid       String?
+}
